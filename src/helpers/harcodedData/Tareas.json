@@ -1,0 +1,25 @@
+{
+    "tareas": [
+        {
+        "id": 1,
+        "nombre": "Hacer ejercicio",
+        "descripcion": "Realizar al menos 30 minutos de actividad física diaria.",
+        "frecuencia": "Diaria",
+        "tipo":"Normal"
+        },
+        {
+        "id": 2,
+        "nombre": "Meditar",
+        "descripcion": "Practicar meditación para reducir el estrés y mejorar la concentración.",
+        "frecuencia": "Diaria",
+        "tipo":"Contadora"
+        },
+        {
+        "id": 3,
+        "nombre": "Leer un libro",
+        "descripcion": "Dedicar tiempo a la lectura para el desarrollo personal y el entretenimiento.",
+        "frecuencia": "Semanal",
+        "tipo":"Cronometrada"
+        }
+    ]
+}
