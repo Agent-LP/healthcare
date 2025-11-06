@@ -15,7 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSlot, onSlotChange }) =>
   const slotBtn = (slot: 'Dia' | 'Tarde' | 'Noche') => (
     <button
       key={slot}
-      className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#0C41FF] ${
+      className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] ${
         activeSlot === slot ? 'bg-[#2D2E48] text-white' : 'text-[#2D3648] hover:bg-[#E2E7F0]'
       }`}
       onClick={() => onSlotChange(slot)}
