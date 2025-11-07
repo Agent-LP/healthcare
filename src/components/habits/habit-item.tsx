@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Habit, HabitActionHandlers } from './habit-types'
+import { icons } from '../../helpers/icons'
 
 export interface HabitItemProps extends HabitActionHandlers {
   habit: Habit
@@ -34,7 +35,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
       onClick={onClick}
       aria-label={label}
     >
-      {label}
+      {icons[label] ?? icons.delete /* fallback por si no existe */}
     </button>
   )
 
@@ -78,7 +79,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
 
       <div className="flex items-center gap-1 text-[#2D2E48]">
         {actionBtn('Completar', () => onComplete(habit.id))}
-        {actionBtn('Saltar', () => onSkip(habit.id))}
+        {actionBtn('Omitir', () => onSkip(habit.id))}
         {actionBtn('Editar', () => onEdit(habit.id))}
         {actionBtn('Eliminar', () => onDelete(habit.id))}
       </div>
