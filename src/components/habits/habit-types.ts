@@ -9,6 +9,8 @@ export interface Habit {
   categoriaColor: string
   fechaInicio?: string
   recordatorio?: string
+  // Duration in seconds only for Cronometrada habits; others can be undefined
+  duracionSegundos?: number
 }
 
 export interface HabitActionHandlers {

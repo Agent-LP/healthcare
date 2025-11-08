@@ -16,6 +16,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false)
   const daysContainerRef = useRef<HTMLDivElement | null>(null)
   const datepickerContainerRef = useRef<HTMLDivElement | null>(null)
+  const inputContainerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (value !== undefined) {
@@ -28,6 +29,28 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
       renderCalendar()
     }
   }, [currentDate, isCalendarOpen, selectedDate])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isCalendarOpen &&
+        datepickerContainerRef.current &&
+        inputContainerRef.current &&
+        !datepickerContainerRef.current.contains(event.target as Node) &&
+        !inputContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsCalendarOpen(false)
+      }
+    }
+
+    if (isCalendarOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isCalendarOpen])
 
   const renderCalendar = () => {
     const year = currentDate.getFullYear()
@@ -48,7 +71,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
     for (let i = 1; i <= daysInMonth; i++) {
       const dayDiv = document.createElement('div')
       dayDiv.className =
-        'flex items-center justify-center cursor-pointer w-[30px] h-[30px] text-[#2D2E48] text-[11px] rounded-full hover:bg-[#0C41FF] hover:text-white'
+        'flex items-center justify-center cursor-pointer w-[24px] h-[24px] text-[#2D2E48] text-[10px] rounded-full hover:bg-[#0C41FF] hover:text-white'
       dayDiv.textContent = i.toString()
 
       dayDiv.addEventListener('click', () => {
@@ -103,7 +126,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" ref={inputContainerRef}>
       <div className="relative flex items-center">
         <span className="absolute left-2 text-[#717D96] z-10">
           <svg
@@ -124,7 +147,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
         <input
           type="text"
           placeholder={placeholder}
-          className="w-full rounded-md border border-[#E2E7F0] bg-white py-2 pl-8 pr-8 text-xs text-[#2D2E48] outline-none transition focus:border-[#0C41FF] focus:ring-2 focus:ring-[#0C41FF]"
+          className="w-full rounded-md border border-[#E2E7F0] bg-white py-1.5 pl-8 pr-8 text-xs text-[#2D2E48] outline-none transition focus:border-[#0C41FF] focus:ring-2 focus:ring-[#0C41FF]"
           value={selectedDate || ''}
           readOnly
           onClick={handleToggleCalendar}
@@ -154,8 +177,8 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
       {isCalendarOpen && (
         <div
           ref={datepickerContainerRef}
-          className="absolute z-50 mt-1 rounded-lg border border-[#E2E7F0] bg-white pt-2 shadow-lg"
-          style={{ minWidth: '260px', maxWidth: '260px' }}
+          className="absolute z-50 mt-1 rounded-lg border border-[#E2E7F0] bg-white pt-1.5 shadow-lg"
+          style={{ minWidth: '220px', maxWidth: '220px' }}
         >
           <div className="flex items-center justify-between px-2">
             <button
@@ -206,7 +229,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
 
           <div
             id="days-of-week"
-            className="mb-1 mt-2 grid grid-cols-7 gap-0.5 px-2"
+            className="mb-0.5 mt-1.5 grid grid-cols-7 gap-0.5 px-2"
           >
             <div className="text-center text-[10px] font-medium text-[#717D96]">D</div>
             <div className="text-center text-[10px] font-medium text-[#717D96]">L</div>
@@ -220,20 +243,20 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
           <div
             ref={daysContainerRef}
             id="days-container"
-            className="mt-0.5 grid grid-cols-7 gap-0.5 px-2 pb-2"
+            className="mt-0.5 grid grid-cols-7 gap-0.5 px-2 pb-1.5"
           >
             {/* Days rendered by renderCalendar */}
           </div>
 
-          <div className="mt-1 flex justify-end gap-1.5 border-t border-[#E2E7F0] p-1.5">
+          <div className="mt-0.5 flex justify-end gap-1.5 border-t border-[#E2E7F0] p-1">
             <button
-              className="rounded-md border border-[#E2E7F0] px-2 py-1 text-[11px] font-medium text-[#2D2E48] hover:bg-[#EDF0F7]"
+              className="rounded-md border border-[#E2E7F0] px-1.5 py-0.5 text-[10px] font-medium text-[#2D2E48] hover:bg-[#EDF0F7]"
               onClick={handleCancel}
             >
               Cancelar
             </button>
             <button
-              className="rounded-md bg-[#0C41FF] px-2 py-1 text-[11px] font-medium text-white hover:bg-[#0A35D9]"
+              className="rounded-md bg-[#0C41FF] px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-[#0A35D9]"
               onClick={handleApply}
             >
               Aplicar

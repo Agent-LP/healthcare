@@ -14,7 +14,7 @@ export const TopNav: React.FC<TopNavProps> = ({ active, onChange }) => {
 
   return (
     <div className="w-full border-b border-[#E2E7F0] bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-4">
+      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-center gap-4">
         <button
           className={getBtn('Habitos')}
           onClick={() => onChange('Habitos')}

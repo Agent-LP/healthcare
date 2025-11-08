@@ -8,23 +8,37 @@ export interface HabitItemProps extends HabitActionHandlers {
 
 export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip, onEdit, onDelete }) => {
   const [count, setCount] = useState(0)
-  const [seconds, setSeconds] = useState(0)
+  const initialTimer = Math.max(0, habit.duracionSegundos ?? 0)
+  const [remaining, setRemaining] = useState(initialTimer)
   const [running, setRunning] = useState(false)
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!running) return
-    intervalRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000)
+    intervalRef.current = window.setInterval(() => {
+      setRemaining((s) => {
+        if (s <= 1) {
+          // Auto stop when reaching zero
+          if (intervalRef.current) window.clearInterval(intervalRef.current)
+          setRunning(false)
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
     return () => {
       if (intervalRef.current) window.clearInterval(intervalRef.current)
     }
   }, [running])
 
-  const handleStart = () => setRunning(true)
+  const handleStart = () => {
+    if (remaining === 0 && initialTimer > 0) setRemaining(initialTimer)
+    setRunning(true)
+  }
   const handlePause = () => setRunning(false)
   const handleReset = () => {
     setRunning(false)
-    setSeconds(0)
+    setRemaining(initialTimer)
   }
 
   const color = habit.categoriaColor ?? '#E2E7F0'
@@ -66,14 +80,19 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
       )}
 
       {habit.tipo === 'Cronometrada' && (
-        <div className="flex items-center gap-2" aria-label="Cronómetro">
-          <div className="tabular-nums min-w-14 text-center">{new Date(seconds * 1000).toISOString().substring(14, 19)}</div>
+        <div className="flex items-center gap-2" aria-label="Temporizador">
+          <div className="tabular-nums min-w-14 text-center">{new Date(remaining * 1000).toISOString().substring(14, 19)}</div>
           {!running ? (
             <button className="px-2 py-1 rounded bg-[#E2E7F0]" onClick={handleStart} aria-label="Iniciar">▶</button>
           ) : (
             <button className="px-2 py-1 rounded bg-[#E2E7F0]" onClick={handlePause} aria-label="Pausar">❚❚</button>
           )}
           <button className="px-2 py-1 rounded bg-[#E2E7F0]" onClick={handleReset} aria-label="Reiniciar">↺</button>
+        </div>
+      )}
+      {habit.tipo !== 'Cronometrada' && (
+        <div className="min-w-14 text-center text-[#717D96]" aria-hidden>
+          {/* Empty placeholder to align with timed habits */}
         </div>
       )}
 

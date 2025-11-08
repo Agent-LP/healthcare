@@ -19,7 +19,8 @@
         "nombre": "Leer un libro",
         "descripcion": "Dedicar tiempo a la lectura para el desarrollo personal y el entretenimiento.",
         "frecuencia": "Semanal",
-        "tipo":"Cronometrada"
+        "tipo":"Cronometrada",
+        "duracionSegundos": 30
         }
     ]
 }
