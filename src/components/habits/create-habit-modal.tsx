@@ -1,98 +1,143 @@
-import React, { useState } from 'react'
-import { CATEGORIES, Category } from '../../helpers/categories'
+import React, { useEffect, useMemo, useState } from 'react'
 import DatePicker from './date-picker'
+import { Category } from '../../helpers/categories'
+import { Habit } from './habit-types'
+
+export interface HabitFormValues {
+  nombre: string
+  label: string
+  tipo: 'Normal' | 'Contadora' | 'Cronometrada'
+  categoria: string
+  fechaInicio: string
+  recordatorio: string
+  duracionSegundos?: number
+  maxConteos?: number
+}
 
 export interface CreateHabitModalProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (habitData: {
-    nombre: string
-    label: string
-    tipo: 'Normal' | 'Contadora' | 'Cronometrada'
-    categoria: string
-    subcategoria: string
-    fechaInicio: string
-    recordatorio: string
-    duracionSegundos?: number
-    maxConteos?: number
-  }) => void
+  onSubmit: (habitData: HabitFormValues, habitId?: number) => void
+  categories: Category[]
+  onAddCategory: (payload: { nombre: string; color: string }) => string
+  initialHabit?: Habit | null
 }
 
-export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onClose, onCreate }) => {
+export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  categories,
+  onAddCategory,
+  initialHabit
+}) => {
   const [nombre, setNombre] = useState('')
   const [label, setLabel] = useState('')
   const [tipo, setTipo] = useState<'Normal' | 'Contadora' | 'Cronometrada'>('Normal')
-  const [categoriaId, setCategoriaId] = useState<string>('')
-  const [subcategoria, setSubcategoria] = useState<string>('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const [recordatorio, setRecordatorio] = useState('07:30')
   const [duracionMinutos, setDuracionMinutos] = useState<number>(25)
   const [maxConteos, setMaxConteos] = useState<number>(1)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryColor, setNewCategoryColor] = useState('#607D8B')
 
-  if (!isOpen) return null
+  const selectedCategory = useMemo(() => categories.find((cat) => cat.id === selectedCategoryId), [categories, selectedCategoryId])
 
-  const selectedCategory: Category | undefined = CATEGORIES.find(cat => cat.id === categoriaId)
-
-  const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategoriaId(e.target.value)
-    setSubcategoria('')
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!nombre || !categoriaId || !subcategoria) return
-
-    onCreate({
-      nombre,
-      label,
-      tipo,
-      categoria: selectedCategory?.nombre || '',
-      subcategoria,
-      fechaInicio,
-      recordatorio,
-      duracionSegundos: tipo === 'Cronometrada' ? Math.max(60, Math.floor(duracionMinutos) * 60) : undefined,
-      maxConteos: tipo === 'Contadora' ? maxConteos : undefined
-    })
-
-    handleClose()
-  }
-
-  const handleClose = () => {
+  const resetForm = () => {
     setNombre('')
     setLabel('')
     setTipo('Normal')
-    setCategoriaId('')
-    setSubcategoria('')
+    setSelectedCategoryId('')
     setFechaInicio('')
     setFechaFin('')
     setRecordatorio('07:30')
     setDuracionMinutos(25)
     setMaxConteos(1)
+    setNewCategoryName('')
+    setNewCategoryColor('#607D8B')
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+    if (initialHabit) {
+      setNombre(initialHabit.nombre)
+      setLabel(initialHabit.descripcion)
+      setTipo(initialHabit.tipo)
+      setFechaInicio(initialHabit.fechaInicio ?? '')
+      setRecordatorio(initialHabit.recordatorio ?? '07:30')
+      setDuracionMinutos(initialHabit.duracionSegundos ? Math.max(1, Math.floor(initialHabit.duracionSegundos / 60)) : 25)
+      setMaxConteos(initialHabit.maxConteos ?? 1)
+      setSelectedCategoryId(
+        categories.find((cat) => cat.nombre === initialHabit.categoria)?.id ?? categories[0]?.id ?? ''
+      )
+      return
+    }
+    resetForm()
+  }, [initialHabit, isOpen, categories])
+
+  if (!isOpen) return null
+
+  const handleModalClose = () => {
+    resetForm()
     onClose()
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleClose()
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      handleModalClose()
     }
+  }
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!nombre.trim() || !selectedCategory) return
+
+    onSubmit(
+      {
+        nombre: nombre.trim(),
+        label,
+        tipo,
+        categoria: selectedCategory.nombre,
+        fechaInicio,
+        recordatorio,
+        duracionSegundos: tipo === 'Cronometrada' ? Math.max(60, Math.floor(duracionMinutos) * 60) : undefined,
+        maxConteos: tipo === 'Contadora' ? Math.max(1, maxConteos) : undefined
+      },
+      initialHabit?.id
+    )
+
+    handleModalClose()
+  }
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return
+    const newId = onAddCategory({
+      nombre: newCategoryName.trim(),
+      color: newCategoryColor
+    })
+    setSelectedCategoryId(newId)
+    setNewCategoryName('')
   }
 
   return (
     <div
-      className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50"
-      onClick={handleClose}
+      className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+      onClick={handleModalClose}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="dialog"
       aria-modal="true"
-      aria-label="Modal para crear hábito"
+      aria-label="Modal para crear o editar hábito"
     >
       <div
         className="bg-[#EDF0F7] rounded-lg border border-[#E2E7F0] p-4 w-full max-w-md mx-4 shadow-lg max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-[#2D2E48] mb-3">Agregar hábito</h2>
+        <h2 className="text-xl font-bold text-[#2D2E48] mb-3">{initialHabit ? 'Editar hábito' : 'Agregar hábito'}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-2">
           <div>
@@ -103,7 +148,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
               id="nombre"
               type="text"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(event) => setNombre(event.target.value)}
               className="w-full px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
               required
             />
@@ -117,7 +162,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
               id="Descripcion"
               type="text"
               value={label}
-              onChange={(e) => setLabel(e.target.value)}
+              onChange={(event) => setLabel(event.target.value)}
               className="w-full px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
             />
           </div>
@@ -130,8 +175,8 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
               <select
                 id="tipo"
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value as 'Normal' | 'Contadora' | 'Cronometrada')}
-                className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E')] bg-no-repeat bg-position-[right_0.5rem_center]"
+                onChange={(event) => setTipo(event.target.value as 'Normal' | 'Contadora' | 'Cronometrada')}
+                className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
               >
                 <option value="Normal">Normal</option>
                 <option value="Contadora">Contadora</option>
@@ -141,7 +186,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
                 <input
                   type="text"
                   disabled
-                  placeholder=""
+                  placeholder="Sin configuraciones"
                   className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] rounded-md bg-[#EDF0F7] text-[#717D96] cursor-not-allowed"
                 />
               )}
@@ -150,7 +195,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
                   type="number"
                   min={1}
                   value={maxConteos}
-                  onChange={(e) => setMaxConteos(Number(e.target.value))}
+                  onChange={(event) => setMaxConteos(Number(event.target.value))}
                   placeholder="Max conteos"
                   className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
                 />
@@ -160,31 +205,24 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
                   type="number"
                   min={1}
                   value={duracionMinutos}
-                  onChange={(e) => setDuracionMinutos(Number(e.target.value))}
+                  onChange={(event) => setDuracionMinutos(Number(event.target.value))}
                   placeholder="Minutos"
                   className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
                 />
               )}
             </div>
           </div>
+
           <div>
             <label className="block text-xs font-medium text-[#2D2E48] mb-1">
               Fecha inicio y fin
             </label>
             <div className="flex gap-2">
               <div className="flex-1">
-                <DatePicker
-                  value={fechaInicio}
-                  onChange={setFechaInicio}
-                  placeholder="Fecha inicio"
-                />
+                <DatePicker value={fechaInicio} onChange={setFechaInicio} placeholder="Fecha inicio" />
               </div>
               <div className="flex-1">
-                <DatePicker
-                  value={fechaFin}
-                  onChange={setFechaFin}
-                  placeholder="Fecha fin"
-                />
+                <DatePicker value={fechaFin} onChange={setFechaFin} placeholder="Fecha fin" />
               </div>
             </div>
           </div>
@@ -198,79 +236,75 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
                 id="recordatorio"
                 type="time"
                 value={recordatorio}
-                onChange={(e) => setRecordatorio(e.target.value)}
+                onChange={(event) => setRecordatorio(event.target.value)}
                 className="w-full px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF] cursor-pointer"
-                onClick={(e) => {
-                  // Make the entire field clickable to open time picker
-                  e.currentTarget.showPicker?.()
-                }}
+                onClick={(event) => event.currentTarget.showPicker?.()}
               />
             </div>
           </div>
+
           <div>
-            <label htmlFor="categoria" className="block text-xs font-medium text-[#2D2E48] mb-1">
-              Categoria
-            </label>
-            <div className="relative rounded-md border border-[#E2E7F0] bg-white overflow-hidden">
-              {selectedCategory && (
-                <div className="absolute top-0 left-0 right-0 h-1 z-10" style={{ backgroundColor: selectedCategory.color }} />
-              )}
-              <select
-                id="categoria"
-                value={categoriaId}
-                onChange={handleCategoriaChange}
-                className="w-full px-2 py-1.5 text-sm border-0 rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] appearance-none bg-white  viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E')] bg-no-repeat bg-position-[right_0.5rem_center]"
-                required
-                style={
-                  selectedCategory
-                    ? {
-                        paddingTop: 'calc(0.5rem + 4px)'
-                      }
-                    : {}
-                }
+            <label className="block text-xs font-medium text-[#2D2E48] mb-1">Categoría</label>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label htmlFor="new-category" className="sr-only">
+                  Nombre de categoría
+                </label>
+                <input
+                  id="new-category"
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(event) => setNewCategoryName(event.target.value)}
+                  placeholder="Nueva categoría"
+                  className="w-full px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
+                />
+              </div>
+              <div>
+                <label htmlFor="category-color" className="sr-only">
+                  Seleccionar color
+                </label>
+                <input
+                  id="category-color"
+                  type="color"
+                  value={newCategoryColor}
+                  onChange={(event) => setNewCategoryColor(event.target.value)}
+                  className="p-1 h-10 w-14 block  cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none  dark:border-neutral-700"
+                  title="Elige un color para la categoría"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                className="px-3 py-1.5 text-sm bg-[#0C41FF] text-white rounded-md hover:bg-[#0A35D9] focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
               >
-                <option value="" style={{ backgroundColor: '#FFFFFF', color: '#000000' }}>Selecciona una categoría</option>
-                {CATEGORIES.map((cat) => (
-                  <option
-                    key={cat.id}
-                    value={cat.id}
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      color: '#000000'
-                    }}
-                  >
-                    {cat.nombre}
-                  </option>
-                ))}
-              </select>
+                Agregar
+              </button>
             </div>
 
-            {selectedCategory && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedCategory.subcategorias.map((sub) => (
-                  <button
-                    key={sub}
-                    type="button"
-                    onClick={() => setSubcategoria(sub)}
-                    className={`px-3 py-1 rounded-md text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] ${
-                      subcategoria === sub
-                        ? 'bg-[#2D2E48] text-white'
-                        : 'bg-white text-[#717D96] hover:bg-[#E2E7F0]'
-                    }`}
-                  >
-                    {sub.replace(/_/g, ' ')}
-                  </button>
-                ))} 
-              </div>
-            )}
+            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3 max-h-24 overflow-y-auto">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className="px-3 py-1 rounded-md text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0C41FF]"
+                  style={{
+                    backgroundColor: cat.color,
+                    opacity: selectedCategoryId === cat.id ? 1 : 0.7
+                  }}
+                  aria-pressed={selectedCategoryId === cat.id}
+                  aria-label={`Seleccionar categoría ${cat.nombre}`}
+                >
+                  {cat.nombre}
+                </button>
+              ))}
+            </div>
           </div>
-
-          
 
           <div className="flex gap-2 pt-2">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={handleModalClose}
               className="flex-1 px-3 py-1.5 text-sm border border-[#E2E7F0] rounded-md text-[#2D2E48] hover:bg-[#EDF0F7] focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
             >
               Cancelar
@@ -279,7 +313,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({ isOpen, onCl
               type="submit"
               className="flex-1 px-3 py-1.5 text-sm bg-[#0C41FF] text-white rounded-md hover:bg-[#0A35D9] focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
             >
-              Guardar
+              {initialHabit ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </form>

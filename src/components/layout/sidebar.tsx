@@ -78,12 +78,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSlot, onSlotChange }) =>
           {slotBtn('Tarde')}
           {slotBtn('Noche')}
         </div>
-        <div className="mt-6 rounded-md bg-white p-4 text-center text-[#717D96]">
-          Placeholder imagen horario
-        </div>
       </div>
 
-      <div className="mt-auto p-4 text-xs text-[#717D96]">HealthFront</div>
     </aside>
   )
 }

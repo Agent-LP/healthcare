@@ -2,45 +2,38 @@ export interface Category {
   id: string
   nombre: string
   color: string
-  subcategorias: string[]
 }
 
 export const CATEGORIES: Category[] = [
   {
     id: 'salud-fisica',
     nombre: 'Salud Física',
-    color: '#4CAF50',
-    subcategorias: ['sueño', 'alimentación', 'hidratación', 'ejercicio', 'descanso']
+    color: '#4CAF50'
   },
   {
     id: 'salud-mental',
     nombre: 'Salud Mental y Emocional',
-    color: '#2196F3',
-    subcategorias: ['meditación', 'diario_emocional', 'agradecimiento', 'lectura_reflexiva', 'desconexión_digital']
+    color: '#2196F3'
   },
   {
     id: 'productividad',
     nombre: 'Productividad y Organización',
-    color: '#FFC107',
-    subcategorias: ['planificación', 'tareas_prioritarias', 'aprendizaje', 'tiempo_foco', 'orden_espacio']
+    color: '#FFC107'
   },
   {
     id: 'social',
     nombre: 'Relaciones y Vida Social',
-    color: '#FF7043',
-    subcategorias: ['comunicación', 'familia', 'amistad', 'colaboración', 'tiempo_en_pareja']
+    color: '#FF7043'
   },
   {
     id: 'crecimiento-personal',
     nombre: 'Crecimiento Personal',
-    color: '#9C27B0',
-    subcategorias: ['aprendizaje_personal', 'auto_reflexión', 'objetivos_personales', 'gratitud', 'autocuidado']
+    color: '#9C27B0'
   },
   {
     id: 'bienestar-general',
     nombre: 'Bienestar General / Otros',
-    color: '#607D8B',
-    subcategorias: ['finanzas', 'limpieza_hogar', 'rutina_mañana', 'rutina_noche', 'viajes']
+    color: '#607D8B'
   }
 ]
 

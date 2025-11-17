@@ -1,22 +1,21 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import tareas from "../helpers/harcodedData/Tareas.json";
 import TopNav from "../components/layout/top-nav";
 import Sidebar from "../components/layout/sidebar";
 import HabitsSection from "../components/habits/habits-section";
 import { Habit } from "../components/habits/habit-types";
-import CreateHabitModal from "../components/habits/create-habit-modal";
-import { CATEGORIES } from "../helpers/categories";
+import CreateHabitModal, { HabitFormValues } from "../components/habits/create-habit-modal";
+import { CATEGORIES, Category } from "../helpers/categories";
 
 const HomePage = () => {
     const [viewType, setViewType] = useState<'Habitos' | 'Calendario' | 'Graficas'>('Habitos')
     const [slot, setSlot] = useState<'Dia' | 'Tarde' | 'Noche'>('Dia')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    const [categories, setCategories] = useState<Category[]>(CATEGORIES)
     const [habits, setHabits] = useState<Habit[]>(() => {
         return tareas.tareas.map((t, i) => {
             const defaultCategory = CATEGORIES[i % CATEGORIES.length]
-            const defaultSubcategory = defaultCategory.subcategorias[0]
             return {
                 id: t.id,
                 nombre: t.nombre,
@@ -24,15 +23,17 @@ const HomePage = () => {
                 frecuencia: t.frecuencia,
                 tipo: t.tipo as Habit['tipo'],
                 categoria: defaultCategory.nombre,
-                subcategoria: defaultSubcategory,
                 categoriaColor: defaultCategory.color,
                 fechaInicio: '',
-                recordatorio: ''
+                recordatorio: '',
+                duracionSegundos: t.tipo === 'Cronometrada' ? t.duracionSegundos ?? 1500 : undefined,
+                maxConteos: t.tipo === 'Contadora' ? 10 : undefined
             }
         })
     })
     const [completed, setCompleted] = useState<Habit[]>([])
     const [skipped, setSkipped] = useState<Habit[]>([])
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
 
     const handleComplete = (id: number) => {
         setHabits(prev => {
@@ -50,37 +51,81 @@ const HomePage = () => {
             return prev.filter(h => h.id !== id)
         })
     }
-    const handleEdit = (id: number) => console.log('edit', id)
+    const handleEdit = (id: number) => {
+        const target = habits.find(h => h.id === id) || completed.find(h => h.id === id) || skipped.find(h => h.id === id) || null
+        if (!target) return
+        setEditingHabit(target)
+        setIsModalOpen(true)
+    }
     const handleDelete = (id: number) => {
         setHabits(prev => prev.filter(h => h.id !== id))
+        setCompleted(prev => prev.filter(h => h.id !== id))
+        setSkipped(prev => prev.filter(h => h.id !== id))
     }
 
-    const handleCreate = (habitData: {
-        nombre: string
-        label: string
-        tipo: 'Normal' | 'Contadora' | 'Cronometrada'
-        categoria: string
-        subcategoria: string
-        fechaInicio: string
-        recordatorio: string
-        duracionSegundos?: number
-        maxConteos?: number
-    }) => {
-        const selectedCategory = CATEGORIES.find(cat => cat.nombre === habitData.categoria)
-        const newHabit: Habit = {
-            id: habits.length > 0 ? Math.max(...habits.map(h => h.id), 0) + 1 : 1,
+    const handleSaveHabit = (habitData: HabitFormValues, habitId?: number) => {
+        const categoryInfo = categories.find(cat => cat.nombre === habitData.categoria)
+        const habitBase = {
             nombre: habitData.nombre,
             descripcion: habitData.label || '',
-            frecuencia: 'Diaria',
             tipo: habitData.tipo,
             categoria: habitData.categoria,
-            subcategoria: habitData.subcategoria,
-            categoriaColor: selectedCategory?.color || '#607D8B',
+            categoriaColor: categoryInfo?.color || '#607D8B',
             fechaInicio: habitData.fechaInicio || undefined,
             recordatorio: habitData.recordatorio || undefined,
-            duracionSegundos: habitData.tipo === 'Cronometrada' ? (habitData.duracionSegundos ?? 1500) : undefined
+            duracionSegundos: habitData.duracionSegundos,
+            maxConteos: habitData.maxConteos
         }
-        setHabits(prev => [...prev, newHabit])
+
+        if (habitId) {
+            const updateHabitList = (list: Habit[]) => list.map(h => h.id === habitId ? { ...h, ...habitBase } : h)
+            setHabits(prev => updateHabitList(prev))
+            setCompleted(prev => updateHabitList(prev))
+            setSkipped(prev => updateHabitList(prev))
+        } else {
+            const newHabit: Habit = {
+                id: habits.length > 0 ? Math.max(...habits.map(h => h.id)) + 1 : 1,
+                nombre: habitBase.nombre,
+                descripcion: habitBase.descripcion,
+                frecuencia: 'Diaria',
+                tipo: habitBase.tipo,
+                categoria: habitBase.categoria,
+                categoriaColor: habitBase.categoriaColor,
+                fechaInicio: habitBase.fechaInicio,
+                recordatorio: habitBase.recordatorio,
+                duracionSegundos: habitBase.duracionSegundos,
+                maxConteos: habitBase.maxConteos
+            }
+            setHabits(prev => [...prev, newHabit])
+        }
+        setEditingHabit(null)
+    }
+
+    const handleAddCategory = ({ nombre, color }: { nombre: string; color: string }) => {
+        const baseId = nombre.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || `categoria-${Date.now()}`
+        let uniqueId = baseId
+        let counter = 1
+        while (categories.some(cat => cat.id === uniqueId)) {
+            uniqueId = `${baseId}-${counter}`
+            counter += 1
+        }
+        const newCategory: Category = {
+            id: uniqueId,
+            nombre,
+            color
+        }
+        setCategories(prev => [...prev, newCategory])
+        return newCategory.id
+    }
+
+    const handleOpenCreate = () => {
+        setEditingHabit(null)
+        setIsModalOpen(true)
+    }
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false)
+        setEditingHabit(null)
     }
 
     return (
@@ -128,7 +173,7 @@ const HomePage = () => {
                     <button
                         className="fixed left-6 bottom-24 md:bottom-20 lg:bottom-8 px-4 py-2 rounded-full bg-[#0C41FF] text-white shadow focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
                         aria-label="Añadir tarea"
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenCreate}
                     > 
                         Añadir Hábito ＋
                     </button>
@@ -144,8 +189,11 @@ const HomePage = () => {
         </div>
         <CreateHabitModal
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onCreate={handleCreate}
+            onClose={handleCloseModal}
+            onSubmit={handleSaveHabit}
+            categories={categories}
+            onAddCategory={handleAddCategory}
+            initialHabit={editingHabit || undefined}
         />
         </>
     )

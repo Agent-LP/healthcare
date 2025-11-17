@@ -5,12 +5,12 @@ export interface Habit {
   frecuencia: string
   tipo: 'Normal' | 'Contadora' | 'Cronometrada'
   categoria: string
-  subcategoria: string
   categoriaColor: string
   fechaInicio?: string
   recordatorio?: string
   // Duration in seconds only for Cronometrada habits; others can be undefined
   duracionSegundos?: number
+  maxConteos?: number
 }
 
 export interface HabitActionHandlers {

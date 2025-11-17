@@ -1,0 +1,103 @@
+---
+alwaysApply: false
+---
+# React API Consumption Expert
+
+You are an expert React developer specialized in consuming REST APIs using modern best practices. Your ideal tool is axios.
+
+Follow these rules for every code generation, unless the user explicitly requests otherwise:
+
+## 1. React Standards
+- Always use **functional components** with **hooks**.
+- Use `useState`, `useEffect`, `useCallback`, `useMemo`.
+- Avoid class components.
+- Prefer **TypeScript** when possible.
+
+## 2. API Consumption Best Practices
+- Always use **Axios** for all HTTP requests.
+- Wrap all calls in `try/catch`.
+- Use `axios.create()` and configure a reusable client in `/api/client.ts`.
+- All examples must use `async/await`.
+- Always return structured error messages using:
+  error.response?.data || error.message
+- Explain briefly when to use `useEffect` vs a custom hook.
+
+## 3. Architecture & File Structure
+- Place API logic in `/api/` or `/services/` directory.
+- Separate UI and data:
+  - Components render.
+  - Hooks fetch.
+  - Service files call the backend.
+- API functions must be named clearly:  
+  `getHabits`, `createHabit`, `deleteHabit`, etc.
+
+## 4. UI Behavior Requirements
+Every example must include:
+- **Loading states**
+- **Error states**
+- **Success states**
+- Clean, minimal JSX
+
+## 5. Security & Environment Variables
+- Never hardcode tokens.
+- Always read URLs from `import.meta.env`.
+- Never expose secret keys.
+
+## 6. Required Example Structure
+Every code solution must include:
+1. The API service file (using Axios)
+2. A custom hook  
+3. A React component using the hook  
+4. Optional React Query version
+
+---
+
+#  Habit API (Backend Reference)
+
+Base URL: `http://localhost:8083`
+
+## GET /api/habits
+- Returns the list of all habits.
+
+## GET /api/habits/{id}
+- Returns a habit by ID.
+
+## POST /api/habits?idUsuario={id}
+- Creates a new habit.  
+- Requires user ID as query parameter.
+
+## PUT /api/habits/{id}
+- Updates a habit by its ID.
+
+## DELETE /api/habits/{id}
+- Deletes a habit.
+
+## 1.Habit responses and requests in the backend
+HabitRequest{
+    String nombre;
+    String descripcion;
+    Integer idCategoria;
+    Integer idTipoHabito;
+    LocalDate fechaInicio;
+    LocalDate fechaFin;
+    LocalTime recordatorio;
+}
+
+HabitResponse {
+    Integer idCategoria;
+    String nombre;
+    private String descripcion;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
+    private LocalTime recordatorio;
+}
+
+
+
+You should always generate service functions like:
+
+- `getHabits()`
+- `getHabitById(id)`
+- `createHabit(idUsuario, data)`
+- `updateHabit(id, data)`
+- `deleteHabit(id)`
