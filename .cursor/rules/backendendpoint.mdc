@@ -56,42 +56,113 @@ Every code solution must include:
 
 Base URL: `http://localhost:8083`
 
-## GET /api/habits
-- Returns the list of all habits.
+HABITS:
+get all habits 
+localhost:8083/api/habits
+get habit by id
+localhost:8083/api/habits/{id}
 
-## GET /api/habits/{id}
-- Returns a habit by ID.
-
-## POST /api/habits?idUsuario={id}
-- Creates a new habit.  
-- Requires user ID as query parameter.
-
-## PUT /api/habits/{id}
-- Updates a habit by its ID.
-
-## DELETE /api/habits/{id}
-- Deletes a habit.
-
-## 1.Habit responses and requests in the backend
-HabitRequest{
-    String nombre;
-    String descripcion;
-    Integer idCategoria;
-    Integer idTipoHabito;
-    LocalDate fechaInicio;
-    LocalDate fechaFin;
-    LocalTime recordatorio;
+create habit
+localhost:8083/api/habits?idUsuario={id_usuario}
+json:
+Hay 3 tipos: Normal, Contadora, Temporizador(Pomodoro)
+Si tipo = Normal
+{
+    "nombre" : "Habito 1",
+    "descripcion" : "tipo de habito normal",
+    "idTipo" : 1,
+    "fechaInicio" : "2025-11-15",
+    "fechaFin" : "2026-01-15",
+    "recordatorio" : "22:00:00",
+    "categorias" : [
+        {
+            "nombre" : "Lectura",
+            "color" : "#F465DD" 
+        },
+        {
+            "nombre" : "eSILO DE VIDA",
+            "color" : "#56SDAD" 
+        }
+    ],
+    "repeticiones":null,
+    "duracion": null
+}
+Si es Contadora: 
+{
+    "nombre" : "Habito 2",
+    "descripcion" : "tipo de habito: Contadora",
+    "idTipo" : 2,
+    "fechaInicio" : "2025-11-15",
+    "fechaFin" : "2026-01-15",
+    "recordatorio" : "22:00:00",
+    "categorias" : [
+        {
+            "nombre" : "Lectura",
+            "color" : "#F465DD" 
+        },
+        {
+            "nombre" : "eSILO DE VIDA",
+            "color" : "#56SDAD" 
+        }
+    ],
+    "repeticiones": {
+        "repeticionesObjetivo": 10,
+        "repeticionesLogradas": 0
+    },
+    "duracion": null
+}
+si es Pomodoro:
+{
+    "nombre" : "Habito 3",
+    "descripcion" : "tipo de habito: Pomodoro:
+    "idTipo" : 3,
+    "fechaInicio" : "2025-11-15",
+    "fechaFin" : "2026-01-15",
+    "recordatorio" : "22:00:00",
+    "categorias" : [
+        {
+            "nombre" : "Lectura",
+            "color" : "#F465DD" 
+        },
+        {
+            "nombre" : "eSILO DE VIDA",
+            "color" : "#56SDAD" 
+        }
+    ],
+    "repeticiones": null,
+    "duracion": {
+   	"duracionObjetivo": number (),
+   	"tiempoLogrado": number (opcional, default 0)
+    }
 }
 
-HabitResponse {
-    Integer idCategoria;
-    String nombre;
-    private String descripcion;
-    private LocalDate fechaInicio;
-    private LocalDate fechaFin;
-    private LocalTime recordatorio;
+update habit
+localhost:8083/api/habits?idUsuario={id_usuario}
+lo mismo de create
+
+delete habit by id
+localhost:8083/api/habits/1
+
+habitos contadores y temporizados:
+Update habito contador
+localhost:8083/api/habitos-contadores/{id_habito}
+json
+{
+    "repeticionesObjetivo": 15,
+    "repeticionesLogradas": 10
+  },
+
+Update habito temporizado
+localhost:8083/api/habitos-temporizados/{id_habito}
+json
+{
+    "duracionObjetivo": 3000,
+    "tiempoLogrado": 1000
 }
 
+CATEGORIAS:
+get all categories by user ID
+localhost:8083/api/categorias/byUser?UserId={userId}
 
 
 You should always generate service functions like:

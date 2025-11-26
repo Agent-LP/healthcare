@@ -3,14 +3,19 @@ export interface Habit {
   nombre: string
   descripcion: string
   frecuencia: string
-  tipo: 'Normal' | 'Contadora' | 'Cronometrada'
+  tipo: string | 'Normal' | 'Contador' | 'Pomodoro' 
   categoria: string
   categoriaColor: string
   fechaInicio?: string
+  fechaFin?: string
   recordatorio?: string
   // Duration in seconds only for Cronometrada habits; others can be undefined
   duracionSegundos?: number
   maxConteos?: number
+  // Backend fields
+  idEstado?: number // 1 = activo, 2 = completado, 3 = omitido
+  repeticionesLogradas?: number // For counter habits
+  tiempoLogrado?: number // For timed habits (in seconds)
 }
 
 export interface HabitActionHandlers {

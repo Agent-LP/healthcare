@@ -1,30 +1,72 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Habit, HabitActionHandlers } from './habit-types'
 import { icons } from '../../helpers/icons'
+import { habitsService } from '../../api/habits.service'
 
 export interface HabitItemProps extends HabitActionHandlers {
   habit: Habit
+  onUpdate?: () => void
 }
 
-export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip, onEdit, onDelete }) => {
-  const [count, setCount] = useState<string>('0')
+export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip, onEdit, onDelete, onUpdate }) => {
+  const initialCount = habit.repeticionesLogradas ?? 0
+  const [count, setCount] = useState<string>(String(initialCount))
   const initialTimer = Math.max(0, habit.duracionSegundos ?? 0)
+  const initialTimeLogged = habit.tiempoLogrado ?? 0
   const [remaining, setRemaining] = useState(initialTimer)
+  const [timeLogged, setTimeLogged] = useState(initialTimeLogged)
   const [running, setRunning] = useState(false)
   const intervalRef = useRef<number | null>(null)
+  const lastSyncRef = useRef<{ count: number; time: number }>({ count: initialCount, time: initialTimeLogged })
 
   useEffect(() => {
-    setCount('0')
-  }, [habit.id])
+    setCount(String(habit.repeticionesLogradas ?? 0))
+    setTimeLogged(habit.tiempoLogrado ?? 0)
+    lastSyncRef.current = { count: habit.repeticionesLogradas ?? 0, time: habit.tiempoLogrado ?? 0 }
+  }, [habit.id, habit.repeticionesLogradas, habit.tiempoLogrado])
+
+  const syncCounterToBackend = useCallback(async (newCount: number) => {
+    if (habit.tipo !== 'Contador' || !habit.maxConteos) return
+    if (lastSyncRef.current.count === newCount) return
+
+    try {
+      await habitsService.updateCounterHabit(habit.id, {
+        repeticionesObjetivo: habit.maxConteos,
+        repeticionesLogradas: newCount
+      })
+      lastSyncRef.current.count = newCount
+      onUpdate?.()
+    } catch (error) {
+      console.error('Error updating counter habit:', error)
+    }
+  }, [habit.id, habit.tipo, habit.maxConteos, onUpdate])
+
+  const syncTimerToBackend = useCallback(async (newTimeLogged: number) => {
+    if (habit.tipo !== 'Pomodoro' || !habit.duracionSegundos) return
+    if (lastSyncRef.current.time === newTimeLogged) return
+
+    try {
+      await habitsService.updateTimedHabit(habit.id, {
+        duracionObjetivo: habit.duracionSegundos,
+        tiempoLogrado: newTimeLogged
+      })
+      lastSyncRef.current.time = newTimeLogged
+      onUpdate?.()
+    } catch (error) {
+      console.error('Error updating timed habit:', error)
+    }
+  }, [habit.id, habit.tipo, habit.duracionSegundos, onUpdate])
 
   useEffect(() => {
     if (!running) return
     intervalRef.current = window.setInterval(() => {
       setRemaining((s) => {
         if (s <= 1) {
-          // Auto stop when reaching zero
           if (intervalRef.current) window.clearInterval(intervalRef.current)
           setRunning(false)
+          const elapsed = initialTimer
+          const totalTime = timeLogged + elapsed
+          syncTimerToBackend(totalTime)
           return 0
         }
         return s - 1
@@ -33,36 +75,58 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
     return () => {
       if (intervalRef.current) window.clearInterval(intervalRef.current)
     }
-  }, [running])
+  }, [running, initialTimer, timeLogged, syncTimerToBackend])
 
   const handleStart = () => {
-    if (remaining === 0 && initialTimer > 0) setRemaining(initialTimer)
+    if (remaining === 0 && initialTimer > 0) {
+      setRemaining(initialTimer)
+    }
     setRunning(true)
   }
-  const handlePause = () => setRunning(false)
+
+  const handlePause = () => {
+    setRunning(false)
+    const elapsed = initialTimer - remaining
+    const totalTime = timeLogged + elapsed
+    setTimeLogged(totalTime)
+    syncTimerToBackend(totalTime)
+  }
+
   const handleReset = () => {
     setRunning(false)
     setRemaining(initialTimer)
+    setTimeLogged(0)
+    syncTimerToBackend(0)
   }
 
   const color = habit.categoriaColor ?? '#E2E7F0'
 
   const handleCountChange = (value: string) => {
     const sanitized = value.replace(/[^\d]/g, '')
-    setCount(sanitized || '0')
+    const numValue = parseInt(sanitized || '0', 10)
+    const maxValue = habit.maxConteos ?? Infinity
+    const finalValue = Math.min(numValue, maxValue)
+    setCount(String(finalValue))
+    syncCounterToBackend(finalValue)
   }
 
   const handleIncreaseCount = () => {
-    if (habit.maxConteos && Number(count) >= habit.maxConteos) {
-      setCount(String(habit.maxConteos))
+    const currentNum = Number(count)
+    const maxValue = habit.maxConteos ?? Infinity
+    if (currentNum >= maxValue) {
+      setCount(String(maxValue))
+      syncCounterToBackend(maxValue)
       return
     }
-    setCount((prev) => String(Number(prev) + 1))
+    const newCount = currentNum + 1
+    setCount(String(newCount))
+    syncCounterToBackend(newCount)
   }
 
   const handleDecreaseCount = () => {
     const nextValue = Math.max(0, Number(count) - 1)
     setCount(String(nextValue))
+    syncCounterToBackend(nextValue)
   }
 
   const actionBtn = (label: string, onClick: () => void) => (
@@ -85,7 +149,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
         </div>
       </div>
 
-      {habit.tipo === 'Contadora' && (
+      {habit.tipo === 'Contador' && (
         <div className="flex flex-1 items-center justify-center gap-3" aria-label="Contador manual">
           <input
             type="text"
@@ -117,7 +181,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
         </div>
       )}
 
-      {habit.tipo === 'Cronometrada' && (
+      {habit.tipo === 'Pomodoro' && (
         <div className="flex items-center gap-2" aria-label="Temporizador">
           <div className="tabular-nums min-w-14 text-center">{new Date(remaining * 1000).toISOString().substring(14, 19)}</div>
           {!running ? (
@@ -128,7 +192,7 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
           <button className="px-2 py-1 rounded bg-[#E2E7F0]" onClick={handleReset} aria-label="Reiniciar">↺</button>
         </div>
       )}
-      {habit.tipo !== 'Cronometrada' && (
+      {habit.tipo !== 'Pomodoro' && (
         <div className="min-w-14 text-center text-[#717D96]" aria-hidden>
           {/* Empty placeholder to align with timed habits */}
         </div>

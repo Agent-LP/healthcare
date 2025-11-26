@@ -75,7 +75,7 @@ export const DatePicker: React.FC<CompactDatePickerProps> = ({
       dayDiv.textContent = i.toString()
 
       dayDiv.addEventListener('click', () => {
-        const selectedDateValue = `${month + 1}/${i}/${year}`
+        const selectedDateValue = `${year}-${month + 1}-${i}`
         setSelectedDate(selectedDateValue)
         onChange?.(selectedDateValue)
 

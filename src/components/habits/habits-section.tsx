@@ -8,9 +8,10 @@ export interface HabitsSectionProps extends HabitActionHandlers {
   completed?: Habit[]
   skipped?: Habit[]
   onToggleSidebar?: () => void
+  onUpdate?: () => void
 }
 
-export const HabitsSection: React.FC<HabitsSectionProps> = ({ title = 'Hábitos', habits, completed = [], skipped = [], onToggleSidebar, ...actions }) => {
+export const HabitsSection: React.FC<HabitsSectionProps> = ({ title = 'Hábitos', habits, completed = [], skipped = [], onToggleSidebar, onUpdate, ...actions }) => {
   return (
     <section className="flex-1">
       <header className="relative flex items-center justify-center border border-[#E2E7F0] rounded-md bg-white px-4 py-3">
@@ -30,7 +31,7 @@ export const HabitsSection: React.FC<HabitsSectionProps> = ({ title = 'Hábitos'
         <div className="px-3 py-2 text-sm font-medium text-[#2D3648] border-b border-[#E2E7F0]">Activos</div>
         <ul className="grid gap-1 p-2">
           {habits.map((h) => (
-            <HabitItem key={h.id} habit={h} {...actions} />
+            <HabitItem key={h.id} habit={h} {...actions} onUpdate={onUpdate} />
           ))}
         </ul>
       </div>
@@ -40,7 +41,7 @@ export const HabitsSection: React.FC<HabitsSectionProps> = ({ title = 'Hábitos'
         <div className="px-3 py-2 text-sm font-medium text-[#2D3648] border-b border-[#E2E7F0]">Completados</div>
         <ul className="grid gap-1 p-2">
           {completed.map((h) => (
-            <HabitItem key={h.id} habit={h} {...actions} />
+            <HabitItem key={h.id} habit={h} {...actions} onUpdate={onUpdate} />
           ))}
         </ul>
       </div>
@@ -50,7 +51,7 @@ export const HabitsSection: React.FC<HabitsSectionProps> = ({ title = 'Hábitos'
         <div className="px-3 py-2 text-sm font-medium text-[#2D3648] border-b border-[#E2E7F0]">Omitidos</div>
         <ul className="grid gap-1 p-2">
           {skipped.map((h) => (
-            <HabitItem key={h.id} habit={h} {...actions} />
+            <HabitItem key={h.id} habit={h} {...actions} onUpdate={onUpdate} />
           ))}
         </ul>
       </div>

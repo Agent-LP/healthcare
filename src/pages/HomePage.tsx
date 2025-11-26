@@ -1,55 +1,86 @@
-import React, { useState } from "react";
-import tareas from "../helpers/harcodedData/Tareas.json";
+import React, { useState, useEffect, useCallback } from "react";
 import TopNav from "../components/layout/top-nav";
 import Sidebar from "../components/layout/sidebar";
 import HabitsSection from "../components/habits/habits-section";
 import { Habit } from "../components/habits/habit-types";
 import CreateHabitModal, { HabitFormValues } from "../components/habits/create-habit-modal";
-import { CATEGORIES, Category } from "../helpers/categories";
+import { Category } from "../helpers/categories";
+import { habitsService } from "../api/habits.service";
+import { categoriesService } from "../api/categories.service";
+import { mapHabitResponseToHabit, mapCategoryResponseToCategory } from "../api/mappers";
+import { getUserId } from "../helpers/user";
 
 const HomePage = () => {
     const [viewType, setViewType] = useState<'Habitos' | 'Calendario' | 'Graficas'>('Habitos')
     const [slot, setSlot] = useState<'Dia' | 'Tarde' | 'Noche'>('Dia')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-    const [categories, setCategories] = useState<Category[]>(CATEGORIES)
-    const [habits, setHabits] = useState<Habit[]>(() => {
-        return tareas.tareas.map((t, i) => {
-            const defaultCategory = CATEGORIES[i % CATEGORIES.length]
-            return {
-                id: t.id,
-                nombre: t.nombre,
-                descripcion: t.descripcion || '',
-                frecuencia: t.frecuencia,
-                tipo: t.tipo as Habit['tipo'],
-                categoria: defaultCategory.nombre,
-                categoriaColor: defaultCategory.color,
-                fechaInicio: '',
-                recordatorio: '',
-                duracionSegundos: t.tipo === 'Cronometrada' ? t.duracionSegundos ?? 1500 : undefined,
-                maxConteos: t.tipo === 'Contadora' ? 10 : undefined
-            }
-        })
-    })
+    const [categories, setCategories] = useState<Category[]>([])
+    const [habits, setHabits] = useState<Habit[]>([])
     const [completed, setCompleted] = useState<Habit[]>([])
     const [skipped, setSkipped] = useState<Habit[]>([])
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const userId = getUserId()
 
-    const handleComplete = (id: number) => {
-        setHabits(prev => {
-            const target = prev.find(h => h.id === id)
-            if (!target) return prev
-            setCompleted(c => [target, ...c])
-            return prev.filter(h => h.id !== id)
-        })
+    const fetchHabits = useCallback(async () => {
+        try {
+            setIsLoading(true)
+            setError(null)
+            const habitsResponse = await habitsService.getAllHabits()
+            const mappedHabits = habitsResponse.map(mapHabitResponseToHabit)
+            
+            const active = mappedHabits.filter(h => h.idEstado === 1 || !h.idEstado)
+            const completedHabits = mappedHabits.filter(h => h.idEstado === 2)
+            const skippedHabits = mappedHabits.filter(h => h.idEstado === 3)
+            
+            setHabits(active)
+            console.log(active)
+            setCompleted(completedHabits)
+            setSkipped(skippedHabits)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al cargar hábitos')
+            console.error('Error fetching habits:', err)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [])
+
+    const fetchCategories = useCallback(async () => {
+        try {
+            const categoriesResponse = await categoriesService.getCategoriesByUserId(userId)
+            const mappedCategories = categoriesResponse.map(mapCategoryResponseToCategory)
+            console.log(mappedCategories)
+            setCategories(mappedCategories)
+        } catch (err) {
+            console.error('Error fetching categories:', err)
+        }
+    }, [userId])
+
+    useEffect(() => {
+        fetchHabits()
+        fetchCategories()
+    }, [fetchHabits, fetchCategories])
+
+    const handleComplete = async (id: number) => {
+        try {
+            await habitsService.updateHabitState(id, 2)
+            await fetchHabits()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al completar hábito')
+            console.error('Error completing habit:', err)
+        }
     }
-    const handleSkip = (id: number) => {
-        setHabits(prev => {
-            const target = prev.find(h => h.id === id)
-            if (!target) return prev
-            setSkipped(s => [target, ...s])
-            return prev.filter(h => h.id !== id)
-        })
+
+    const handleSkip = async (id: number) => {
+        try {
+            await habitsService.updateHabitState(id, 3)
+            await fetchHabits()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al omitir hábito')
+            console.error('Error skipping habit:', err)
+        }
     }
     const handleEdit = (id: number) => {
         const target = habits.find(h => h.id === id) || completed.find(h => h.id === id) || skipped.find(h => h.id === id) || null
@@ -57,65 +88,88 @@ const HomePage = () => {
         setEditingHabit(target)
         setIsModalOpen(true)
     }
-    const handleDelete = (id: number) => {
-        setHabits(prev => prev.filter(h => h.id !== id))
-        setCompleted(prev => prev.filter(h => h.id !== id))
-        setSkipped(prev => prev.filter(h => h.id !== id))
+    const handleDelete = async (id: number) => {
+        try {
+            await habitsService.deleteHabit(id)
+            await fetchHabits()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al eliminar hábito')
+            console.error('Error deleting habit:', err)
+        }
     }
 
-    const handleSaveHabit = (habitData: HabitFormValues, habitId?: number) => {
-        const categoryInfo = categories.find(cat => cat.nombre === habitData.categoria)
-        const habitBase = {
-            nombre: habitData.nombre,
-            descripcion: habitData.label || '',
-            tipo: habitData.tipo,
-            categoria: habitData.categoria,
-            categoriaColor: categoryInfo?.color || '#607D8B',
-            fechaInicio: habitData.fechaInicio || undefined,
-            recordatorio: habitData.recordatorio || undefined,
-            duracionSegundos: habitData.duracionSegundos,
-            maxConteos: habitData.maxConteos
-        }
-
-        if (habitId) {
-            const updateHabitList = (list: Habit[]) => list.map(h => h.id === habitId ? { ...h, ...habitBase } : h)
-            setHabits(prev => updateHabitList(prev))
-            setCompleted(prev => updateHabitList(prev))
-            setSkipped(prev => updateHabitList(prev))
-        } else {
-            const newHabit: Habit = {
-                id: habits.length > 0 ? Math.max(...habits.map(h => h.id)) + 1 : 1,
-                nombre: habitBase.nombre,
-                descripcion: habitBase.descripcion,
-                frecuencia: 'Diaria',
-                tipo: habitBase.tipo,
-                categoria: habitBase.categoria,
-                categoriaColor: habitBase.categoriaColor,
-                fechaInicio: habitBase.fechaInicio,
-                recordatorio: habitBase.recordatorio,
-                duracionSegundos: habitBase.duracionSegundos,
-                maxConteos: habitBase.maxConteos
+    const handleSaveHabit = async (habitData: HabitFormValues, habitId?: number) => {
+        try {
+            setError(null)
+            const selectedCategory = categories.find(cat => cat.nombre === habitData.categoria)
+            if (!selectedCategory) {
+                setError('Debe seleccionar una categoría')
+                return
             }
-            setHabits(prev => [...prev, newHabit])
+
+            const tipoMap: Record<'Normal' | 'Contador' | 'Pomodoro', number> = {
+                'Normal': 1,
+                'Contador': 2,
+                'Pomodoro': 3
+            }
+
+            const requestData = {
+                nombre: habitData.nombre,
+                descripcion: habitData.label || '',
+                idTipo: tipoMap[habitData.tipo],
+                idEstado: 1,
+                fechaInicio: habitData.fechaInicio || new Date().toISOString().split('T')[0],
+                fechaFin: habitData.fechaFin || undefined,
+                recordatorio: habitData.recordatorio || undefined,
+                categorias: [{
+                    nombre: selectedCategory.nombre,
+                    color: selectedCategory.color
+                }],
+                repeticiones: habitData.tipo === 'Contador' ? {
+                    repeticionesObjetivo: habitData.maxConteos || 1,
+                    repeticionesLogradas: habitId && editingHabit?.repeticionesLogradas !== undefined 
+                        ? editingHabit.repeticionesLogradas 
+                        : 0
+                } : null,
+                duracion: habitData.tipo === 'Pomodoro' ? {
+                    duracionObjetivo: habitData.duracionSegundos || 1500,
+                    tiempoLogrado: habitId && editingHabit?.tiempoLogrado !== undefined 
+                        ? editingHabit.tiempoLogrado 
+                        : 0
+                } : null
+            }
+            console.log(requestData.fechaInicio)
+            console.log(requestData.fechaFin)
+
+            if (habitId) {
+                await habitsService.updateHabit(habitId, userId, requestData)
+            } else {
+                await habitsService.createHabit(userId, requestData)
+            }
+            
+            await fetchHabits()
+            setEditingHabit(null)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al guardar hábito')
+            console.error('Error saving habit:', err)
         }
-        setEditingHabit(null)
     }
 
     const handleAddCategory = ({ nombre, color }: { nombre: string; color: string }) => {
         const baseId = nombre.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || `categoria-${Date.now()}`
         let uniqueId = baseId
         let counter = 1
-        while (categories.some(cat => cat.id === uniqueId)) {
+        while (categories.some(cat => cat.idCategoria === uniqueId)) {
             uniqueId = `${baseId}-${counter}`
             counter += 1
         }
         const newCategory: Category = {
-            id: uniqueId,
+            idCategoria: uniqueId,
             nombre,
             color
         }
         setCategories(prev => [...prev, newCategory])
-        return newCategory.id
+        return newCategory.idCategoria
     }
 
     const handleOpenCreate = () => {
@@ -147,17 +201,31 @@ const HomePage = () => {
                     </div>
                 )}
                 <main className="flex-1 p-4">
+                    {error && (
+                        <div className="mb-4 p-3 bg-[#EA5455] text-white rounded-md text-sm">
+                            {error}
+                        </div>
+                    )}
                     {viewType === 'Habitos' && (
-                        <HabitsSection
-                            habits={habits}
-                            completed={completed}
-                            skipped={skipped}
-                            onComplete={handleComplete}
-                            onSkip={handleSkip}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onToggleSidebar={() => setIsSidebarOpen((v)=>!v)}
-                        />
+                        <>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-64 text-[#717D96]">
+                                    Cargando hábitos...
+                                </div>
+                            ) : (
+                                <HabitsSection
+                                    habits={habits}
+                                    completed={completed}
+                                    skipped={skipped}
+                                    onComplete={handleComplete}
+                                    onSkip={handleSkip}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onToggleSidebar={() => setIsSidebarOpen((v)=>!v)}
+                                    onUpdate={fetchHabits}
+                                />
+                            )}
+                        </>
                     )}
                     {viewType === 'Calendario' && (
                         <div className="h-full grid place-items-center text-[#717D96] border border-[#E2E7F0] rounded-md">

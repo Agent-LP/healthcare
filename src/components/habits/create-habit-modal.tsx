@@ -6,9 +6,10 @@ import { Habit } from './habit-types'
 export interface HabitFormValues {
   nombre: string
   label: string
-  tipo: 'Normal' | 'Contadora' | 'Cronometrada'
+  tipo: string |'Normal' | 'Contador' | 'Pomodoro'
   categoria: string
   fechaInicio: string
+  fechaFin?: string
   recordatorio: string
   duracionSegundos?: number
   maxConteos?: number
@@ -33,7 +34,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
 }) => {
   const [nombre, setNombre] = useState('')
   const [label, setLabel] = useState('')
-  const [tipo, setTipo] = useState<'Normal' | 'Contadora' | 'Cronometrada'>('Normal')
+  const [tipo, setTipo] = useState<string |'Normal' | 'Contador' | 'Pomodoro'>('Normal')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
@@ -43,7 +44,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryColor, setNewCategoryColor] = useState('#607D8B')
 
-  const selectedCategory = useMemo(() => categories.find((cat) => cat.id === selectedCategoryId), [categories, selectedCategoryId])
+  const selectedCategory = useMemo(() => categories.find((cat) => cat.idCategoria === selectedCategoryId), [categories, selectedCategoryId])
 
   const resetForm = () => {
     setNombre('')
@@ -68,11 +69,12 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
       setLabel(initialHabit.descripcion)
       setTipo(initialHabit.tipo)
       setFechaInicio(initialHabit.fechaInicio ?? '')
+      setFechaFin(initialHabit.fechaFin ?? '')
       setRecordatorio(initialHabit.recordatorio ?? '07:30')
       setDuracionMinutos(initialHabit.duracionSegundos ? Math.max(1, Math.floor(initialHabit.duracionSegundos / 60)) : 25)
       setMaxConteos(initialHabit.maxConteos ?? 1)
       setSelectedCategoryId(
-        categories.find((cat) => cat.nombre === initialHabit.categoria)?.id ?? categories[0]?.id ?? ''
+        categories.find((cat) => cat.nombre === initialHabit.categoria)?.idCategoria ?? categories[0]?.idCategoria ?? ''
       )
       return
     }
@@ -103,9 +105,10 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
         tipo,
         categoria: selectedCategory.nombre,
         fechaInicio,
+        fechaFin: fechaFin || undefined,
         recordatorio,
-        duracionSegundos: tipo === 'Cronometrada' ? Math.max(60, Math.floor(duracionMinutos) * 60) : undefined,
-        maxConteos: tipo === 'Contadora' ? Math.max(1, maxConteos) : undefined
+        duracionSegundos: tipo === 'Pomodoro' ? Math.max(60, Math.floor(duracionMinutos) * 60) : undefined,
+        maxConteos: tipo === 'Contador' ? Math.max(1, maxConteos) : undefined
       },
       initialHabit?.id
     )
@@ -175,12 +178,12 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
               <select
                 id="tipo"
                 value={tipo}
-                onChange={(event) => setTipo(event.target.value as 'Normal' | 'Contadora' | 'Cronometrada')}
+                onChange={(event) => setTipo(event.target.value as 'Normal' | 'Contador' | 'Pomodoro')}
                 className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0C41FF] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3E%3Cpath fill=\'none\' stroke=\'%23343a40\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
               >
                 <option value="Normal">Normal</option>
-                <option value="Contadora">Contadora</option>
-                <option value="Cronometrada">Cronometrada</option>
+                <option value="Contador">Contador</option>
+                <option value="Pomodoro">Pomodoro</option>
               </select>
               {tipo === 'Normal' && (
                 <input
@@ -190,7 +193,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
                   className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] rounded-md bg-[#EDF0F7] text-[#717D96] cursor-not-allowed"
                 />
               )}
-              {tipo === 'Contadora' && (
+              {tipo === 'Contador' && (
                 <input
                   type="number"
                   min={1}
@@ -200,7 +203,7 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
                   className="flex-1 px-2 py-1.5 text-sm border border-[#E2E7F0] bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0C41FF]"
                 />
               )}
-              {tipo === 'Cronometrada' && (
+              {tipo === 'Pomodoro' && (
                 <input
                   type="number"
                   min={1}
@@ -284,15 +287,15 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
             <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3 max-h-24 overflow-y-auto">
               {categories.map((cat) => (
                 <button
-                  key={cat.id}
+                  key={cat.idCategoria}
                   type="button"
-                  onClick={() => setSelectedCategoryId(cat.id)}
+                  onClick={() => setSelectedCategoryId(cat.idCategoria)}
                   className="px-3 py-1 rounded-md text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0C41FF]"
                   style={{
                     backgroundColor: cat.color,
-                    opacity: selectedCategoryId === cat.id ? 1 : 0.7
+                    opacity: selectedCategoryId === cat.idCategoria ? 1 : 0.7
                   }}
-                  aria-pressed={selectedCategoryId === cat.id}
+                  aria-pressed={selectedCategoryId === cat.idCategoria}
                   aria-label={`Seleccionar categoría ${cat.nombre}`}
                 >
                   {cat.nombre}
