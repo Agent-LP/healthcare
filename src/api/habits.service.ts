@@ -14,7 +14,7 @@ export const habitsService = {
       return response.data
     } catch (error) {
       throw error
-    }
+    } 
   },
 
   async getHabitById(id: number): Promise<HabitResponse> {

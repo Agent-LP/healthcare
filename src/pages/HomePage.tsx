@@ -85,6 +85,8 @@ const HomePage = () => {
     const handleEdit = (id: number) => {
         const target = habits.find(h => h.id === id) || completed.find(h => h.id === id) || skipped.find(h => h.id === id) || null
         if (!target) return
+        console.log("Target:", target);
+
         setEditingHabit(target)
         setIsModalOpen(true)
     }

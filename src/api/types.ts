@@ -5,7 +5,7 @@ export interface CategoryResponse {
 }
 
 export interface HabitResponse {
-  id: number
+  idHabito: number
   nombre: string
   descripcion: string
   tipo: string
@@ -13,14 +13,8 @@ export interface HabitResponse {
   fechaFin?: string
   recordatorio?: string
   categorias: CategoryResponse[]
-  repeticiones?: {
-    repeticionesObjetivo: number
-    repeticionesLogradas: number
-  }
-  duracion?: {
-    duracionObjetivo: number
-    tiempoLogrado: number
-  }
+  habitoContador?: RepeticionesResponse
+  habitoTemporizado?: DuracionResponse
   idEstado?: number
 }
 
@@ -46,6 +40,18 @@ export interface CreateHabitRequest {
   } | null
 }
 
+export interface DuracionResponse{
+    idHabito: number;
+    duracionObjetivo: number; // en milisegundos
+    tiempoLogrado: number;
+}
+
+export interface RepeticionesResponse {
+    idHabito: number;
+    repeticionesObjetivo: number;
+    repeticionesLogradas: number;
+}
+
 export interface UpdateCounterHabitRequest {
   repeticionesObjetivo: number
   repeticionesLogradas: number
@@ -59,6 +65,7 @@ export interface UpdateTimedHabitRequest {
 export interface UpdateHabitStateRequest {
   idEstado: number
 }
+
 
 
 

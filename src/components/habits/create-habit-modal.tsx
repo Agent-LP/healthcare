@@ -71,7 +71,8 @@ export const CreateHabitModal: React.FC<CreateHabitModalProps> = ({
       setFechaInicio(initialHabit.fechaInicio ?? '')
       setFechaFin(initialHabit.fechaFin ?? '')
       setRecordatorio(initialHabit.recordatorio ?? '07:30')
-      setDuracionMinutos(initialHabit.duracionSegundos ? Math.max(1, Math.floor(initialHabit.duracionSegundos / 60)) : 25)
+      console.log(initialHabit.duracionSegundos)
+      setDuracionMinutos(initialHabit.duracionSegundos ? initialHabit.duracionSegundos/60: 0)
       setMaxConteos(initialHabit.maxConteos ?? 1)
       setSelectedCategoryId(
         categories.find((cat) => cat.nombre === initialHabit.categoria)?.idCategoria ?? categories[0]?.idCategoria ?? ''

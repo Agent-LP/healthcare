@@ -7,7 +7,7 @@ export const mapHabitResponseToHabit = (response: HabitResponse): Habit => {
   const primaryCategory = response.categorias?.[0] || { nombre: 'Sin categoría', color: '#607D8B' }
 
   return {
-    id: response.id,
+    id: response.idHabito,
     nombre: response.nombre,
     descripcion: response.descripcion,
     frecuencia: 'Diaria',
@@ -17,11 +17,11 @@ export const mapHabitResponseToHabit = (response: HabitResponse): Habit => {
     fechaInicio: response.fechaInicio,
     fechaFin: response.fechaFin,
     recordatorio: response.recordatorio,
-    duracionSegundos: response.duracion?.duracionObjetivo,
-    maxConteos: response.repeticiones?.repeticionesObjetivo,
+    maxConteos: response.habitoContador?.repeticionesObjetivo,
+    duracionSegundos: response.habitoTemporizado?.duracionObjetivo,
     idEstado: response.idEstado || 1,
-    repeticionesLogradas: response.repeticiones?.repeticionesLogradas,
-    tiempoLogrado: response.duracion?.tiempoLogrado
+    repeticionesLogradas: response.habitoContador?.repeticionesLogradas,
+    tiempoLogrado: response.habitoTemporizado?.tiempoLogrado
   }
 }
 
@@ -32,6 +32,7 @@ export const mapCategoryResponseToCategory = (response: { idCategoria: number; n
     color: response.color
   }
 }
+
 
 
 

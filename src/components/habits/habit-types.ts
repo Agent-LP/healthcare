@@ -16,6 +16,7 @@ export interface Habit {
   idEstado?: number // 1 = activo, 2 = completado, 3 = omitido
   repeticionesLogradas?: number // For counter habits
   tiempoLogrado?: number // For timed habits (in seconds)
+  
 }
 
 export interface HabitActionHandlers {
