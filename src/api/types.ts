@@ -15,14 +15,13 @@ export interface HabitResponse {
   categorias: CategoryResponse[]
   habitoContador?: RepeticionesResponse
   habitoTemporizado?: DuracionResponse
-  idEstado?: number
+  estado?: string
 }
 
 export interface CreateHabitRequest {
   nombre: string
   descripcion: string
   idTipo: number
-  idEstado: number
   fechaInicio: string
   fechaFin?: string
   recordatorio?: string

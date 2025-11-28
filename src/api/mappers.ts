@@ -19,7 +19,7 @@ export const mapHabitResponseToHabit = (response: HabitResponse): Habit => {
     recordatorio: response.recordatorio,
     maxConteos: response.habitoContador?.repeticionesObjetivo,
     duracionSegundos: response.habitoTemporizado?.duracionObjetivo,
-    idEstado: response.idEstado || 1,
+    estado: response.estado,
     repeticionesLogradas: response.habitoContador?.repeticionesLogradas,
     tiempoLogrado: response.habitoTemporizado?.tiempoLogrado
   }

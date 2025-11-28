@@ -52,9 +52,9 @@ export const habitsService = {
     }
   },
 
-  async updateHabitState(id: number, idEstado: number): Promise<void> {
+  async updateHabitState(id: number, estado: string): Promise<void> {
     try {
-      await apiClient.patch<UpdateHabitStateRequest>(`/api/habits/${id}`, { idEstado })
+      await apiClient.put<UpdateHabitStateRequest>(`/api/habits/${id}/estado?estado=${estado}`)
     } catch (error) {
       throw error
     }

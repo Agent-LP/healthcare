@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import TopNav from "../components/layout/top-nav";
 import Sidebar from "../components/layout/sidebar";
 import HabitsSection from "../components/habits/habits-section";
-import { Habit } from "../components/habits/habit-types";
-import CreateHabitModal, { HabitFormValues } from "../components/habits/create-habit-modal";
+import { Habit, HabitFormValues } from "../components/habits/habit-types";
+import CreateHabitModal from "../components/habits/create-habit-modal";
 import { Category } from "../helpers/categories";
 import { habitsService } from "../api/habits.service";
 import { categoriesService } from "../api/categories.service";
@@ -31,9 +31,9 @@ const HomePage = () => {
             const habitsResponse = await habitsService.getAllHabits()
             const mappedHabits = habitsResponse.map(mapHabitResponseToHabit)
             
-            const active = mappedHabits.filter(h => h.idEstado === 1 || !h.idEstado)
-            const completedHabits = mappedHabits.filter(h => h.idEstado === 2)
-            const skippedHabits = mappedHabits.filter(h => h.idEstado === 3)
+            const active = mappedHabits.filter(h => h.estado === "activo" || !h.estado)
+            const completedHabits = mappedHabits.filter(h => h.estado === "completado")
+            const skippedHabits = mappedHabits.filter(h => h.estado === "omitido")
             
             setHabits(active)
             console.log(active)
@@ -65,7 +65,7 @@ const HomePage = () => {
 
     const handleComplete = async (id: number) => {
         try {
-            await habitsService.updateHabitState(id, 2)
+            await habitsService.updateHabitState(id, "completado")
             await fetchHabits()
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al completar hábito')
@@ -75,7 +75,7 @@ const HomePage = () => {
 
     const handleSkip = async (id: number) => {
         try {
-            await habitsService.updateHabitState(id, 3)
+            await habitsService.updateHabitState(id, "omitido")
             await fetchHabits()
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al omitir hábito')
@@ -119,7 +119,6 @@ const HomePage = () => {
                 nombre: habitData.nombre,
                 descripcion: habitData.label || '',
                 idTipo: tipoMap[habitData.tipo],
-                idEstado: 1,
                 fechaInicio: habitData.fechaInicio || new Date().toISOString().split('T')[0],
                 fechaFin: habitData.fechaFin || undefined,
                 recordatorio: habitData.recordatorio || undefined,

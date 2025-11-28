@@ -141,12 +141,12 @@ export const HabitItem: React.FC<HabitItemProps> = ({ habit, onComplete, onSkip,
 
   return (
     <li className="flex items-center justify-between gap-4 py-3 px-3 rounded-md hover:bg-[#E2E7F0]">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3  ">
         <span className="mt-1 size-4 rounded-full" style={{ backgroundColor: color }} />
-        <div>
+        <div> 
           <div className="text-sm font-semibold text-[#2D3648]">{habit.nombre}</div>
           <div className="text-xs text-[#717D96]">{habit.descripcion || habit.categoria}</div>
-        </div>
+        </div>   
       </div>
 
       {habit.tipo === 'Contador' && (

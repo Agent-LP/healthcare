@@ -1,19 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import DatePicker from './date-picker'
 import { Category } from '../../helpers/categories'
-import { Habit } from './habit-types'
+import { Habit, HabitFormValues } from './habit-types'
 
-export interface HabitFormValues {
-  nombre: string
-  label: string
-  tipo: string |'Normal' | 'Contador' | 'Pomodoro'
-  categoria: string
-  fechaInicio: string
-  fechaFin?: string
-  recordatorio: string
-  duracionSegundos?: number
-  maxConteos?: number
-}
+
 
 export interface CreateHabitModalProps {
   isOpen: boolean

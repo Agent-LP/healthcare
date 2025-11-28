@@ -13,10 +13,22 @@ export interface Habit {
   duracionSegundos?: number
   maxConteos?: number
   // Backend fields
-  idEstado?: number // 1 = activo, 2 = completado, 3 = omitido
+  estado?: string // 1 = activo, 2 = completado, 3 = omitido
   repeticionesLogradas?: number // For counter habits
   tiempoLogrado?: number // For timed habits (in seconds)
   
+}
+
+export interface HabitFormValues {
+  nombre: string
+  label: string
+  tipo: string |'Normal' | 'Contador' | 'Pomodoro'
+  categoria: string
+  fechaInicio: string
+  fechaFin?: string
+  recordatorio: string
+  duracionSegundos?: number
+  maxConteos?: number
 }
 
 export interface HabitActionHandlers {
